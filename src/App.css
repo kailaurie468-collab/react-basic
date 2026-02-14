@@ -7,6 +7,15 @@
   pointer-events: none;
 }
 
+.my-counter .subP {
+  margin-top: 20px;
+  color: #61dafb;
+  font-size: 24px;
+  background-color: #282c34;
+  padding: 10px;
+  border-radius: 8px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
