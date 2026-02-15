@@ -12,6 +12,8 @@ const arr = [
 
 // jsx  语法：在js中写html标签
 function App() {
+
+  const [value, setValue] = useState('');
   return (
     <div className="App">
       <header className="App-header">
@@ -45,6 +47,7 @@ function App() {
       <button onClick={(event) => handleClick2('Alice', event)}>Click me too</button>
       <Counter className="my-counter" string={str}/>
       <ExitObject/>
+      <input type='text' value={value} onChange={(e) => setValue(e.target.value)} />
     </div>
   );
 }

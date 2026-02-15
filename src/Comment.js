@@ -1,14 +1,16 @@
 import { useState, useRef } from "react";
-import "./App2.css";
+import "./Comment.css";
+import dayjs from "dayjs";
 
-function App2() {
+function Comment() {
+    // 必须要在dom渲染完成后 才能获取到input元素的引用，所以需要使用useRef来创建一个ref对象，并将其绑定到input元素上。
     const inputRef = useRef(null);
     const [idNumber, setIdNumber] = useState(1);
     const [commentList, setComment] = useState([
         {
             id: 99,
             content: "欢迎使用评论系统！",
-            pubDate: Date.now(),
+            pubDate: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
             likeCount: 0,
         }
     ]);
@@ -23,12 +25,14 @@ function App2() {
             {
                 id: idNumber,
                 content: context,
-                pubDate: Date.now(),
+                pubDate: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
                 likeCount: 0,
             },
             ...commentList,
         ]);
         inputRef.current.value = "";
+        // 重新聚焦
+        inputRef.current.focus();
     };
 
     const deleteComment = (id) => {
@@ -105,4 +109,4 @@ const Navigation = (props) => {
     );
 }
 
-export default App2;
+export default Comment;
