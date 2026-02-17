@@ -7,7 +7,7 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
+    "module": "esnext",
     "target": "esnext",
     "types": [],
     // For nodejs:
@@ -42,5 +42,7 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "noImplicitThis": true, // 这个选项会在函数中使用 this 时进行检查，确保 this 的类型是明确的
+    "moduleResolution": "bundler", // 或者 "NodeNext"
   }
 }

@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
-import Comment from './Comment';
-import reportWebVitals from './reportWebVitals';
+import App from './App.js';
+import Comment from './Comment.js';
+import reportWebVitals from './reportWebVitals.js';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 // 将react 
