@@ -34,6 +34,7 @@
 
     // Recommended Options
     "allowJs": true,      // 允许 TS 编译器处理 .js 文件
+    "noEmit": true, // 👈 告诉 TS：只管检查错误，别给我生成任何 .js 文件
     "esModuleInterop": true, // 允许你用 import d from 'dayjs' 这种方式导入 CommonJS 模块
     "strict": true,
     "jsx": "react-jsx",
