@@ -1,9 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./App.js";
+// import App from "./App.js";
 import Comment from "./Comment.js";
-import reportWebVitals from "./reportWebVitals.js";
+import { Provider } from "react-redux";
+import store from "./store/index.js";
+// import reportWebVitals from "./reportWebVitals.js";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 // 将react
@@ -12,7 +14,10 @@ root.render(
   //   {/* <App /> */}
   //   <Comment/>
   // </React.StrictMode>
-  <Comment />,
+  // 能够让react的组件树 都能够访问到redux的store
+  <Provider store={store}>
+    <Comment />,
+  </Provider>,
 );
 
 // If you want to start measuring performance in your app, pass a function

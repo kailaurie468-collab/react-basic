@@ -3,6 +3,14 @@ import "./Comment.css";
 import dayjs from "dayjs";
 import axios from "axios";
 import useToggle from "./IHook.js";
+import { legacy_createStore as createStore } from "redux";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  increment,
+  decrement,
+  addByNum,
+  fetchJsonDataByaysncThunk,
+} from "./store/modules/counterStore.js";
 
 const ctx = createContext();
 const URL = "https://jsonplaceholder.typicode.com/comments";
@@ -29,29 +37,78 @@ function useFetchComments(afterIdRef) {
   return [commentList, setComment, afterIdRef];
 }
 
-// 封装评论item
-function CommentItem({ comment, onDelete }) {
-  return (
-    <li key={comment.id} className="comment-item">
-      <p className="item-id">评论ID: {comment.id}</p>
-      <p className="item-content">{comment.content}</p>
-      <p className="item-date">{new Date(comment.pubDate).toLocaleString()}</p>
-      <p className="item-likes">点赞数: {comment.likeCount}</p>
-      <button className="del-btn" onClick={() => onDelete(comment.id)}>
-        删除
-      </button>
-    </li>
-  );
+// 1.原始 redux 使用：1.创建reducer函数 2.创建store 3.组件通过store.getState()获取状态，通过store.dispatch(action)分发动作来修改状态
+function reducer(state = { count: 0 }, action) {
+  switch (action.type) {
+    case "INCREMENT":
+      // 注意：reducer函数必须是纯函数，不能直接修改传入的状态对象，而是应该返回一个新的状态对象。
+      return { count: state.count + 1 };
+    case "DECREMENT":
+      return { count: state.count - 1 };
+    default:
+      return state;
+  }
 }
+// 创建store
+const store = createStore(reducer);
+
+// 订阅state 变化
+store.subscribe(() => {
+  console.log("Redux state发生了变化，新的状态是：", store.getState());
+});
+
+// 2. react-redux 使用：1.创建reducer函数 2.创建store
+// 2.1.在组件树的根组件使用Provider组件将store传递下去
+// 2.2.在需要使用状态的组件中使用useSelector获取状态，使用useDispatch分发动作来修改状态
 
 function Comment() {
+  //index.js 的provider传入的store综合对象  store.getState()
+  // counter 来自于你 configureStore 时的那个属性名
+  const { value, isLoading, error } = useSelector((state) => {
+    // provider的store存储的reducer其实是state、action（原版的reducer函数综合），
+    // 通过getState方法获取所有slice store的current state
+    /**
+     * {
+    "counter": {
+        "value": 0
+    },
+    "channel": {
+        "value": 0
+    }
+     */
+    return state.counter;
+  });
+  // 这个只能在组件中使用
+  const dispatch = useDispatch();
+  /*
+ 你绝对不能在 Reducer 里面写 async/await，也不能在里面发起 Axios 网络请求、设置 setTimeout 或者操作 localStorage。
+ */
+  // 第一次渲染的时候需要从store请求数据 进行渲染
+  const fetchJsonData = () => {
+    // 将axios请求封装到独立的js文件，依然能够拿到dispatch
+    // 门卫说：“兄弟，你在这个文件里拿不到 useDispatch。来，用我传给你的这把 dispatch 钥匙！”
+    return async (dispatch) => {
+      const res = await axios.get(URL);
+      dispatch(addByNum(res.data.length));
+    };
+  };
+  // thunk 正常的 Redux 规定 dispatch 只能接收对象
+  // useEffect(() => {
+  //   dispatch(fetchJsonData());
+  // }, [dispatch]);
+
+  // 使用asyncThunk 代理派发
+  useEffect(() => {
+    dispatch(fetchJsonDataByaysncThunk(URL));
+  }, [dispatch]);
+
   // 只要组件不被销毁（Unmount），保险箱里的数据就永远在，哪怕组件重新渲染了一万次。
   const afterIdRef = useRef(null);
   const [commentList, setComment] = useFetchComments(afterIdRef);
   // js主任务栈暂时不会执行axios的回调函数，此时idNumber 就是null
   // const [idNumber, setIdNumber] = useState(afterIdRef.current);
   // 组件挂载后发送请求获取评论数据，并将其存储在状态中
-  // 1.没有依赖项：组件渲染或者更新后就只执行一次
+  // 1.没有依赖项：组件渲染或者更新后就执行一次
   useEffect(() => {
     console.log("组件渲染或者更新后执行了--------22222222222222");
     // 2. 这里就是“清理函数”（Cleanup） 下面的组件会更新，清除上一次的副作用
@@ -129,6 +186,9 @@ function Comment() {
   };
   const msg = "这是一个通过Context传递的消息";
   const { isOn, toggle } = useToggle();
+
+  if (isLoading) return <div>正在拼命加载中...转圈圈...</div>;
+  if (error) return <div>{error}</div>;
   return (
     <div className="main-wrapper">
       <ctx.Provider value={msg}>
@@ -146,6 +206,18 @@ function Comment() {
         {isOn && <A />}
         <B />
       </ctx.Provider>
+      {/* <button onClick={() => store.dispatch({ type: "INCREMENT" })}>
+        点击增加Redux计数器
+      </button> */}
+      {/* 因为 这个count并不是ref，react不能感知并同步更新渲染，这只是普通的js对象  使用react-redux 桥接*/}
+      {/* <p>Redux计数器的值: {store.getState().count}</p>
+      <button onClick={() => store.dispatch({ type: "DECREMENT" })}>
+        点击减少Redux计数器
+      </button> */}
+      <button onClick={() => dispatch(increment())}>点击增加Redux计数器</button>
+      <p>Redux计数器的值: {value}</p>
+      <button onClick={() => dispatch(decrement())}>点击减少Redux计数器</button>
+      <button onClick={() => dispatch(addByNum(10))}>点击加10</button>
       <hr className="divider" />
 
       <div className="input-box">
@@ -167,7 +239,7 @@ function Comment() {
 
       <ul className="comment-list">
         {/* { 条件 && <要渲染的组件/标签> } 条件渲染 */}
-        {commentList.map((comment) => {
+        {/* {commentList.map((comment) => {
           return (
             <li key={comment.id} className="comment-item">
               <p className="item-id">评论ID: {comment.id}</p>
@@ -184,7 +256,14 @@ function Comment() {
               </button>
             </li>
           );
-        })}
+        })} */}
+        {commentList.map((comment) => (
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            onDelete={deleteComment}
+          />
+        ))}
       </ul>
     </div>
   );
@@ -245,5 +324,20 @@ const B = () => {
     </div>
   );
 };
+
+// 封装评论item
+function CommentItem({ comment, onDelete }) {
+  return (
+    <li key={comment.id} className="comment-item">
+      <p className="item-id">评论ID: {comment.id}</p>
+      <p className="item-content">{comment.content}</p>
+      <p className="item-date">{new Date(comment.pubDate).toLocaleString()}</p>
+      <p className="item-likes">点赞数: {comment.likeCount}</p>
+      <button className="del-btn" onClick={() => onDelete(comment.id)}>
+        删除
+      </button>
+    </li>
+  );
+}
 
 export default Comment;
