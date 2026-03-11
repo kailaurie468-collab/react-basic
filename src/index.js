@@ -5,7 +5,18 @@ import "./index.css";
 import Comment from "./Comment.js";
 import { Provider } from "react-redux";
 import store from "./store/index.js";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import router from "./router/index.js";
 // import reportWebVitals from "./reportWebVitals.js";
+
+// const router = createBrowserRouter([
+//   {
+//     path: "/",
+//     element: <Comment />,
+//     // index 作用：让这个路由成为默认路由
+//     index: true,
+//   },
+// ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 // 将react
@@ -16,7 +27,7 @@ root.render(
   // </React.StrictMode>
   // 能够让react的组件树 都能够访问到redux的store
   <Provider store={store}>
-    <Comment />,
+    <RouterProvider router={router} />
   </Provider>,
 );
 

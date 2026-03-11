@@ -1,5 +1,6 @@
 import { useState, useRef, useContext, createContext, useEffect } from "react";
-import "./Comment.css";
+// import "./Comment.css";
+import "@/Comment.scss";
 import dayjs from "dayjs";
 import axios from "axios";
 import useToggle from "./IHook.js";
@@ -11,6 +12,9 @@ import {
   addByNum,
   fetchJsonDataByaysncThunk,
 } from "./store/modules/counterStore.js";
+import { Link, useNavigate } from "react-router-dom";
+import { Button, Form, Input } from "antd";
+// import { Navigate } from "react-router-dom";
 
 const ctx = createContext();
 const URL = "https://jsonplaceholder.typicode.com/comments";
@@ -144,7 +148,7 @@ function Comment() {
   // 必须要在dom渲染完成后 才能获取到input元素的引用，所以需要使用useRef来创建一个ref对象，并将其绑定到input元素上。
   const inputRef = useRef(null);
   const [broMsg, setBroMsg] = useState("");
-
+  const navigate = useNavigate();
   const pubComment = (context) => {
     if (context.trim() === "") {
       alert("评论内容不能为空");
@@ -205,7 +209,17 @@ function Comment() {
       <ctx.Provider value={[broMsg, setBroMsg]}>
         {isOn && <A />}
         <B />
+        <LoginForm />
       </ctx.Provider>
+      {/* to 路径 ， navigateConfig对象 */}
+      {/* replace作用：是否替换当前的历史记录 */}
+      <button onClick={() => navigate("/about?name=mcc", { replace: true })}>
+        命令式跳转
+      </button>
+      <Link to={"/about"}>点击跳转到about页面</Link>
+      <Button color="primary" variant="solid">
+        antd 按钮
+      </Button>
       {/* <button onClick={() => store.dispatch({ type: "INCREMENT" })}>
         点击增加Redux计数器
       </button> */}
@@ -268,7 +282,41 @@ function Comment() {
     </div>
   );
 }
+const onFinsih = (values) => {
+  console.log(values);
+};
 
+const LoginForm = () => {
+  return (
+    // 使用antDesign的表单
+    <Form validateTrigger="onBlur" onFinish={onFinsih}>
+      <Form.Item
+        name="username"
+        label="用户名"
+        rules={[{ required: true, message: "请输入用户名" }, {}]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="password"
+        label="密码"
+        rules={[
+          {
+            required: true,
+            message: "请输入密码",
+          },
+        ]}
+      >
+        <Input.Password />
+      </Form.Item>
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          登录
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
 const Navigation = (props) => {
   return (
     <div className="nav-container">

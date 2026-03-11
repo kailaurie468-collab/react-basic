@@ -52,7 +52,6 @@ const counterStore = createSlice({
       });
   },
 });
-
 // return asyncThunk
 export const fetchJsonDataByaysncThunk = createAsyncThunk(
   // 第一个参数：表示promise 的三种状态前缀
@@ -66,6 +65,7 @@ export const fetchJsonDataByaysncThunk = createAsyncThunk(
 
 // 导出actionCreator 用来在组件中创建action 分配给dispatch来修改state
 /**
+
  * {
  *  action: ...,
  *  payload: ...
