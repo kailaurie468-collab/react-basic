@@ -4,7 +4,6 @@ import {
   Outlet,
   useParams,
   useSearchParams,
-  redirect,
 } from "react-router-dom";
 // import Comment from "@/Comment.js";
 import { lazy, Suspense } from "react";

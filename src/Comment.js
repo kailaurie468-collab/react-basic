@@ -1,4 +1,15 @@
-import { useState, useRef, useContext, createContext, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useContext,
+  createContext,
+  useEffect,
+  useReducer,
+  useMemo,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 // import "./Comment.css";
 import "@/Comment.scss";
 import dayjs from "dayjs";
@@ -14,6 +25,7 @@ import {
 } from "./store/modules/counterStore.js";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Form, Input } from "antd";
+import { memo } from "react";
 // import { Navigate } from "react-router-dom";
 
 const ctx = createContext();
@@ -65,7 +77,26 @@ store.subscribe(() => {
 // 2.1.在组件树的根组件使用Provider组件将store传递下去
 // 2.2.在需要使用状态的组件中使用useSelector获取状态，使用useDispatch分发动作来修改状态
 
+const fib = (n) => {
+  if (n <= 1) return 1;
+  return fib(n - 1) + fib(n - 2);
+};
+
 function Comment() {
+  // useMemo 可以缓存函数的结果，避免不必要的计算
+  const [num1, setNum1] = useState(1);
+  const [num2, setNum2] = useState(1);
+  // 只有在num1发生变化的时候才会执行
+  /**
+   * useMemo（算数据用的）： 它是在渲染过程中同步执行的。
+   * 就像炒菜时必须先切好肉（计算出 res），才能下锅炒（渲染 JSX）。所以第一次必须切肉。
+   * useEffect（搞副作用用的）： 它是在渲染完成、屏幕上已经画出页面之后，才偷偷在后台异步执行的。
+   */
+  const res = useMemo(() => {
+    console.log("计算了");
+    return fib(num1);
+  }, [num1]);
+
   //index.js 的provider传入的store综合对象  store.getState()
   // counter 来自于你 configureStore 时的那个属性名
   const { value, isLoading, error } = useSelector((state) => {
@@ -179,32 +210,53 @@ function Comment() {
     );
     setComment(sortedList);
   };
-
+  const memoSortByLikeCount = useCallback(sortByLikeCount, [
+    commentList.length,
+  ]);
   const sortByPubDate = () => {
     const sortedList = [...commentList].sort((a, b) => b.pubDate - a.pubDate);
     setComment(sortedList);
   };
-
+  const memoSortByPubDate = useCallback(sortByPubDate, [commentList.length]);
   const handlerClick = (msg) => {
     console.log("父组件的handlerClick被调用了，参数是：", msg);
   };
-  const msg = "这是一个通过Context传递的消息";
+  const memoHandlerClick = useCallback(handlerClick, []);
+  const [msg, setMsg] = useState("ConText的数据");
   const { isOn, toggle } = useToggle();
-
+  // 控制子组件的DOM ref
+  const sonRef = useRef(null);
+  // 控制子组件的Funtion ref
+  const funRef = useRef(null);
   if (isLoading) return <div>正在拼命加载中...转圈圈...</div>;
   if (error) return <div>{error}</div>;
+
   return (
     <div className="main-wrapper">
+      <button
+        onClick={() => {
+          sonRef.current.style.color = "red";
+          funRef.current.changePcolor();
+          console.log(sonRef.current);
+          // sonRef.current.changePcolor();
+        }}
+      >
+        点击控制子组件的DOM 元素
+      </button>
       <ctx.Provider value={msg}>
-        <Navigation
+        <ForwardMemoNavigation
           commentCount={commentList.length}
-          sortByLikeCount={sortByLikeCount}
-          sortByPubDate={sortByPubDate}
-          onClick={handlerClick}
+          sortByLikeCount={memoSortByLikeCount}
+          sortByPubDate={memoSortByPubDate}
+          onClick={memoHandlerClick}
           toggle={toggle}
+          // 传递多个ref 既可以当作props 也可以当作ref去传（子组件需要整合多个ref）
+          funRef={funRef}
+          ref={sonRef}
         >
-          <span>props:children</span>
-        </Navigation>
+          {/* ref是在组件挂在完成之后开始赋值，先在子组件开始赋值，向下寻找 找到插槽二次覆盖 所以此时sonRef就是绑定的span */}
+          <span ref={sonRef}>props:children</span>
+        </ForwardMemoNavigation>
       </ctx.Provider>
       <ctx.Provider value={[broMsg, setBroMsg]}>
         {isOn && <A />}
@@ -217,8 +269,23 @@ function Comment() {
         命令式跳转
       </button>
       <Link to={"/about"}>点击跳转到about页面</Link>
-      <Button color="primary" variant="solid">
-        antd 按钮
+      <Button
+        color="primary"
+        variant="solid"
+        onClick={() => {
+          setNum2((prev) => prev + 1);
+        }}
+      >
+        设置Num2
+      </Button>
+      <Button
+        color="primary"
+        variant="solid"
+        onClick={() => {
+          setNum1((prev) => prev + 1);
+        }}
+      >
+        设置Num1 {res}
       </Button>
       {/* <button onClick={() => store.dispatch({ type: "INCREMENT" })}>
         点击增加Redux计数器
@@ -317,7 +384,18 @@ const LoginForm = () => {
     </Form>
   );
 };
-const Navigation = (props) => {
+// 当子组件的props没有变化时，不要随着父组件的重新渲染 而去重新渲染
+// 因为父组件重新渲染的时候，函数对象的地址会发生变化 所以即使加了Memo也会重新渲染
+
+const Navigation = (props, ref) => {
+  console.log("Navigation组件重新渲染了");
+  // 子组件自己的方法 想供父组件调用
+  const pRef = useRef(null);
+  const changePcolor = () => {
+    pRef.current.style.color = "red";
+  };
+  // 暴露给父组件
+  useImperativeHandle(props.funRef, () => ({ changePcolor }));
   return (
     <div className="nav-container">
       <span className="commentCount">评论数量: {props.commentCount}</span>
@@ -333,10 +411,10 @@ const Navigation = (props) => {
       </button>
       {props.children}
       <div className="sort-box">
-        <p className="likeCount" onClick={props.sortByLikeCount}>
+        <p className="likeCount" onClick={props.sortByLikeCount} ref={pRef}>
           点赞排序
         </p>
-        <p className="pubDate" onClick={props.sortByPubDate}>
+        <p className="pubDate" onClick={props.sortByPubDate} ref={ref}>
           时间排序
         </p>
       </div>
@@ -344,6 +422,13 @@ const Navigation = (props) => {
     </div>
   );
 };
+// 先让组件被forwardRef 具备接收ref对象的能力 在使用memo缓存包裹
+// 父组件需要拿到子组件的DOM节点，可以使用forwardRef
+// 两个参数的含义：父组件传递给子组件的props 但是props对象拿不到ref对象
+const ForwardNavigation = forwardRef((props, ref) => {
+  return <Navigation {...props} ref={ref} />;
+});
+const ForwardMemoNavigation = memo(ForwardNavigation);
 // 兄弟组件 通信 方式1： 通过共同父组件来实现中转，useState状态提升
 // 方式2 ： Context 上下文
 const Footer = () => {
