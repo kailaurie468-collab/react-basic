@@ -1,3 +1,17 @@
+import { useState } from "react";
+
+interface UserInterfacePro {
+  name: string;
+  age: number;
+}
+type UserType = {
+  name: string;
+  age: number;
+};
+function TsComponent() {
+  const [user, setUser] = useState<UserInterface>();
+}
+
 let a: number = 1;
 let b: string = "hello";
 let c: boolean = true;
